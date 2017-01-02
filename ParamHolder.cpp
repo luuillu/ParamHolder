@@ -99,8 +99,22 @@ struct A<void (C::*)()>{
 	enum{V=2};
 	};
 
+class BASE{
+public:
+	static void f() {
+		std::cout<<"BASE f()"<<std::endl;
+	}
+	typedef void (&FUN)();
+	static  FUN mf;
+};
+BASE::FUN BASE::mf = BASE::f;
 
-
+class DV: public BASE{
+public:
+	static void mf(){
+		std::cout<<"DV f()"<<std::endl;
+	}
+};
 
 //class C:public A<C> {
 //public:
@@ -118,9 +132,11 @@ void testDes()
 	//delete pB;
 }
 int main(int argc, char **argv) {
+	BASE::mf();
+	DV::mf();
 	testDes();
 
-#define RESULT TDC_TO_STRING(PH_PARAM_HOLDER_N(2, PH_IS_MEMBER_FUNCION))
+#define RESULT TDC_TO_STRING(PH_PARAM_HOLDER_N(1,PH_TRUE))
 //#define RESULT TDC_TO_STRING(TDC_GENERATE_COLON(0))
 #pragma message(RESULT)
 	const volatile char chv = 's';
@@ -132,30 +148,31 @@ int main(int argc, char **argv) {
 	std::cout<<"this is f, V="<<ISV<TYPE>::V<<std::endl;
 
 
-	ParamHolder<PF>::Reference pFHolder(ch);
 	Test test;
+	ParamHolder<PF>::Reference pFHolder(&test, &Test::f, ch);
+
 
 	int ret = -1;
-	//ret = pFHolder.invoke(&test, &Test::f);
+	//ret = pFHolder.invoke();
 	ret = test.f(ch);
 	std::cout<<"this is f, ret="<<ret<<std::endl;
 
 	ret = -1;
 
 	typedef void (Test::*PG)(int *p);
-	ParamHolder<PG>::Reference pGHolder(&ret);
-	pGHolder.invoke(&test, &Test::g);
+	ParamHolder<PG>::Reference pGHolder(&test, &Test::g, &ret);
+	pGHolder.invoke();
 
 	typedef void (*PSF)(void *p);
 
-	ParamHolder<PSF>::Value pSfHolder0(0);
+	ParamHolder<PSF>::Value* pSfHolder = new ParamHolder<PSF>::Value(&Test::Sf, 0);
 
-	ParamHolder<PSF>::Value* pSfHolder = new ParamHolder<PSF>::Value(0);
+	pSfHolder->invoke();
 
-	pSfHolder->invoke(&Test::Sf);
+	delete pSfHolder;
+////	//pSfHolder->free(pSfHolder);
 
-	//delete pSfHolder;
-	//pSfHolder->free(pSfHolder);
+	//todo const test;
 
 	return 0;
 }
